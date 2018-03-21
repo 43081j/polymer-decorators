@@ -21,8 +21,8 @@ abstract class DecoratorVisitor<T extends ts.Node> extends Visitor {
     if (this.isValidNode(node) && node.decorators) {
       const decorators = node.decorators;
 
-      const decorator = decorators.find((d) =>
-        this.kinds.indexOf(this.getDecoratorName(d)) !== -1);
+      const decorator = decorators.find(
+          (d) => this.kinds.indexOf(this.getDecoratorName(d)) !== -1);
 
       if (!decorator) {
         return node;
@@ -36,9 +36,11 @@ abstract class DecoratorVisitor<T extends ts.Node> extends Visitor {
     return ts.visitEachChild(node, (child) => this.visit(child), this.context);
   }
 
-  protected removeDecorators(decorators: ts.NodeArray<ts.Decorator>, names: string[]): ts.NodeArray<ts.Decorator>|undefined {
-    const newDecorators = decorators.filter((decorator) =>
-      names.indexOf(this.getDecoratorName(decorator)) === -1);
+  protected removeDecorators(
+      decorators: ts.NodeArray<ts.Decorator>,
+      names: string[]): ts.NodeArray<ts.Decorator>|undefined {
+    const newDecorators = decorators.filter(
+        (decorator) => names.indexOf(this.getDecoratorName(decorator)) === -1);
 
     if (newDecorators.length === 0 && decorators.length !== 0) {
       return undefined;
@@ -83,10 +85,14 @@ class CustomElementVisitor extends DecoratorVisitor<ts.ClassDeclaration> {
 
   applyDecorator(decorator: ts.Decorator, node: ts.ClassDeclaration) {
     const members = node.members;
-    const isProperty: ts.PropertyDeclaration|undefined = members.find<ts.PropertyDeclaration>((m): m is ts.PropertyDeclaration =>
-      ts.isPropertyDeclaration(m) && m.name.getText() === 'is');
-    const isAccessor: ts.GetAccessorDeclaration|undefined = members.find<ts.GetAccessorDeclaration>((m): m is ts.GetAccessorDeclaration =>
-      ts.isGetAccessor(m) && m.name.getText() === 'is');
+    const isProperty: ts.PropertyDeclaration|undefined =
+        members.find<ts.PropertyDeclaration>(
+            (m): m is ts.PropertyDeclaration =>
+                ts.isPropertyDeclaration(m) && m.name.getText() === 'is');
+    const isAccessor: ts.GetAccessorDeclaration|undefined =
+        members.find<ts.GetAccessorDeclaration>(
+            (m): m is ts.GetAccessorDeclaration =>
+                ts.isGetAccessor(m) && m.name.getText() === 'is');
     const args = this.getDecoratorArguments(decorator);
     let tagName: string|null = null;
 
@@ -96,8 +102,10 @@ class CustomElementVisitor extends DecoratorVisitor<ts.ClassDeclaration> {
       }
     } else if (isAccessor) {
       if (isAccessor.body) {
-        const returnStatement = isAccessor.body.statements.find<ts.ReturnStatement>((statement): statement is ts.ReturnStatement =>
-          ts.isReturnStatement(statement));
+        const returnStatement =
+            isAccessor.body.statements.find<ts.ReturnStatement>(
+                (statement): statement is ts.ReturnStatement =>
+                    ts.isReturnStatement(statement));
 
         if (returnStatement && returnStatement.expression) {
           tagName = returnStatement.expression.getText();
@@ -112,14 +120,12 @@ class CustomElementVisitor extends DecoratorVisitor<ts.ClassDeclaration> {
       tagName = args[0].getText();
 
       const newGetter = ts.createGetAccessor(
-        undefined,
-        [ts.createToken(ts.SyntaxKind.StaticKeyword)],
-        'is',
-        [],
-        undefined,
-        ts.createBlock([
-          ts.createReturn(args[0])
-        ]));
+          undefined,
+          [ts.createToken(ts.SyntaxKind.StaticKeyword)],
+          'is',
+          [],
+          undefined,
+          ts.createBlock([ts.createReturn(args[0])]));
 
       node.members = ts.createNodeArray([newGetter, ...members]);
     }
@@ -142,9 +148,7 @@ class CustomElementVisitor extends DecoratorVisitor<ts.ClassDeclaration> {
 
 export function decoratorTransformer(): ts.TransformerFactory<ts.SourceFile> {
   return (context) => {
-    const visitors = [
-      new CustomElementVisitor(context)
-    ];
+    const visitors = [new CustomElementVisitor(context)];
 
     const visit: ts.Visitor = (node) => {
       for (const visitor of visitors) {
@@ -163,12 +167,8 @@ class XFoo extends HTMLElement {
 }
 `;
 let result = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.CommonJS
-  },
-  transformers: {
-    before: [decoratorTransformer()]
-  }
+  compilerOptions: {module: ts.ModuleKind.CommonJS},
+  transformers: {before: [decoratorTransformer()]}
 });
 
 console.log(result.outputText);
